@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IoT Temperature Monitor</title>
+    <link rel="stylesheet" href="styles.css" />
+    <!-- Font Awesome for icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="sidebar">
+      <div class="logo">
+        <i class="fas fa-temperature-high"></i>
+        <h2>TempMon</h2>
+      </div>
+      <nav>
+        <ul>
+          <li class="active">
+            <a href="#"><i class="fas fa-chart-line"></i> Dashboard</a>
+          </li>
+        </ul>
+      </nav>
+      <div class="user-info">
+        <div class="avatar">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="user-details">
+          <p class="user-name">Guest User</p>
+          <p class="user-role">IoT Specialist</p>
+        </div>
+      </div>
+    </div>
+
+    <main>
+      <header>
+        <h1>Temperature Monitoring Dashboard</h1>
+        <div class="header-controls">
+          <div class="controls-right">
+            <label class="theme-switch">
+              <input type="checkbox" id="theme-toggle" />
+              <span class="slider">
+                <span class="theme-icons"><i class="fas fa-sun"></i></span>
+                <span class="theme-icons"><i class="fas fa-moon"></i></span>
+              </span>
+            </label>
+            <button class="login-btn">
+              <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="dashboard">
+        <section class="stats-overview">
+          <div class="stat-card">
+            <div class="stat-icon pulse">
+              <i class="fas fa-thermometer-half"></i>
+            </div>
+            <div class="stat-info">
+              <h3>Temperature</h3>
+              <p class="stat-value" id="temperature-value">-- °C</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-info">
+              <h3>Last Update</h3>
+              <p class="stat-value" id="last-update-value">--:--:--</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="fas fa-wifi"></i>
+            </div>
+            <div class="stat-info">
+              <h3>Status</h3>
+              <p class="stat-value" id="status-value">Connected</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="main-chart-container">
+          <div class="chart-container full-width">
+            <div class="chart-header">
+              <h3>Temperature Monitoring</h3>
+              <div class="chart-controls">
+                <button class="time-btn active">1h</button>
+                <button class="time-btn">1d</button>
+                <button class="time-btn">1w</button>
+                <button class="time-btn">1m</button>
+              </div>
+            </div>
+            <div class="thingspeak-chart" id="temperature-chart">
+              <iframe
+                width="100%"
+                height="100%"
+                style="border: none; overflow: hidden"
+                src="https://thingspeak.com/channels/2900397/charts/1?bgcolor=%231c1c20&color=%23d62020&dynamic=true&results=60&type=line&update=15&xaxis=TIME&yaxis=TEMPERATURE&width=auto&height=auto"
+                frameborder="0"
+                scrolling="no"
+                allowtransparency="true"
+              ></iframe>
+            </div>
+          </div>
+        </section>
+
+        <section class="status-alerts">
+          <h3>Recent Activity</h3>
+          <div class="status-container" id="status-container">
+            <div class="status-card">
+              <div class="status-icon normal">
+                <i class="fas fa-check-circle"></i>
+              </div>
+              <div class="status-info">
+                <p class="status-time">Just now</p>
+                <p class="status-message">
+                  System connected and monitoring temperature
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <div class="modal" id="login-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Login</h3>
+          <span class="close-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+          <form id="login-form">
+            <div class="form-group">
+              <label for="username">Username</label>
+              <input
+                type="text"
+                id="username"
+                placeholder="Enter username"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input
+                type="password"
+                id="password"
+                placeholder="Enter password"
+                required
+              />
+            </div>
+            <button type="submit" class="btn-primary">Login</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="tech-particles" id="particles"></div>
+    <script src="script.js"></script>
+  </body>
+</html>
