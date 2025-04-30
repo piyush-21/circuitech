@@ -512,6 +512,11 @@ h1 {
   gap: 25px;
 }
 
+/* Hide dashboard content */
+.dashboard.hidden {
+  display: none;
+}
+
 /* Stats overview section - Glass effect */
 .stats-overview {
   display: grid;

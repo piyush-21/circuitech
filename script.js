@@ -17,15 +17,21 @@ const themeToggle = document.getElementById("theme-toggle");
 const particles = document.getElementById("particles");
 
 const temperatureValue = document.getElementById("temperature-value");
+const heartbeatValue = document.getElementById("heartbeat-value");
 const lastUpdateValue = document.getElementById("last-update-value");
 const statusValue = document.getElementById("status-value");
 const statusContainer = document.getElementById("status-container");
+const dashboardElement = document.querySelector(".dashboard"); // Get dashboard element
+
+let isLoggedIn = false; // Track login state
 
 function initApp() {
   setupEventListeners();
-  startDataUpdates();
+  // Don't start data updates immediately
+  // startDataUpdates();
   initializeTheme();
   initParticles();
+  checkLoginState(); // Check login state on load
 }
 
 function initializeTheme() {
@@ -50,25 +56,36 @@ function applyTheme(theme) {
 }
 
 function updateChartTheme(theme) {
-  const chartFrame = document.querySelector(".thingspeak-chart iframe");
-  if (!chartFrame) return;
+  const tempChartFrame = document.querySelector("#temperature-chart iframe");
+  const heartbeatChartFrame = document.querySelector("#heartbeat-chart iframe");
+  const bgColor = theme === "dark" ? "%231e1e1e" : "%23ffffff";
 
-  let src = chartFrame.src;
-  const bgColor = theme === "dark" ? "%231c1c20" : "%23ffffff";
-  if (src.includes("bgcolor=")) {
-    src = src.replace(/(bgcolor=)(%23[a-f0-9]+)/i, `$1${bgColor}`);
-    chartFrame.src = src;
+  if (tempChartFrame) {
+    let src = tempChartFrame.src;
+    if (src.includes("bgcolor=")) {
+      src = src.replace(/(bgcolor=)(%23[a-fA-F0-9]+)/i, `$1${bgColor}`);
+      tempChartFrame.src = src;
+    }
+  }
+  if (heartbeatChartFrame) {
+    let src = heartbeatChartFrame.src;
+    if (src.includes("bgcolor=")) {
+      src = src.replace(/(bgcolor=)(%23[a-fA-F0-9]+)/i, `$1${bgColor}`);
+      heartbeatChartFrame.src = src;
+    }
   }
 }
 
 function setupEventListeners() {
-  loginBtn.addEventListener("click", () => (loginModal.style.display = "flex"));
-  closeModal.addEventListener(
-    "click",
-    () => (loginModal.style.display = "none")
-  );
-  window.addEventListener("click", (e) => {
-    if (e.target === loginModal) loginModal.style.display = "none";
+  loginBtn.addEventListener("click", () => {
+    if (isLoggedIn) {
+      logoutUser();
+    } else {
+      // Only show modal if not already displayed (e.g., on initial load)
+      if (loginModal.style.display !== "flex") {
+        loginModal.style.display = "flex";
+      }
+    }
   });
 
   timeBtns.forEach((btn) => {
@@ -89,35 +106,126 @@ function setupEventListeners() {
 
   document.getElementById("login-form").addEventListener("submit", (e) => {
     e.preventDefault();
-    const username = document.getElementById("username").value;
-    loginModal.style.display = "none";
-    document.querySelector(".user-name").textContent = username;
-    document.querySelector(".user-role").textContent = "Admin";
-    loginBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
-    addStatusMessage("Login successful");
+    const usernameInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+    const username = usernameInput.value;
+    const password = passwordInput.value;
+
+    if (username === "user12345" && password === "admin@123") {
+      loginModal.style.display = "none";
+      document.querySelector(".user-name").textContent = username;
+      document.querySelector(".user-role").textContent = "Admin";
+      loginBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
+      addStatusMessage("Login successful");
+      isLoggedIn = true;
+      dashboardElement.classList.remove("hidden"); // Show dashboard
+      // Restore visibility and interaction
+      document.querySelector(".sidebar").style.opacity = "1";
+      document.querySelector("header").style.opacity = "1";
+      document.querySelector("main").style.pointerEvents = "auto";
+      startDataUpdates(); // Start data updates after login
+      usernameInput.value = "";
+      passwordInput.value = "";
+    } else {
+      addStatusMessage("Invalid username or password", "warning");
+      passwordInput.value = "";
+    }
   });
 
   window.addEventListener("resize", handleResize);
 }
 
+function checkLoginState() {
+  // In a real app, you'd check localStorage/sessionStorage or make an API call
+  if (!isLoggedIn) {
+    dashboardElement.classList.add("hidden");
+    loginModal.style.display = "flex"; // Show login modal immediately
+    // Ensure sidebar and header are less prominent or hidden when logged out
+    document.querySelector(".sidebar").style.opacity = "0.5";
+    document.querySelector("header").style.opacity = "0.5";
+    document.querySelector("main").style.pointerEvents = "none"; // Prevent interaction with main content
+  } else {
+    dashboardElement.classList.remove("hidden");
+    // Restore visibility and interaction
+    document.querySelector(".sidebar").style.opacity = "1";
+    document.querySelector("header").style.opacity = "1";
+    document.querySelector("main").style.pointerEvents = "auto";
+    startDataUpdates(); // Start updates only if logged in
+  }
+}
+
+function logoutUser() {
+  document.querySelector(".user-name").textContent = "Guest User";
+  document.querySelector(".user-role").textContent = "IoT Specialist";
+  loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+  addStatusMessage("Logout successful");
+  isLoggedIn = false;
+  dashboardElement.classList.add("hidden"); // Hide dashboard
+  // Optionally stop data updates if they run in intervals
+  // clearInterval(dataUpdateInterval); // Assuming you store the interval ID
+  loginModal.style.display = "flex"; // Show login modal again after logout
+  // Make background less prominent again
+  document.querySelector(".sidebar").style.opacity = "0.5";
+  document.querySelector("header").style.opacity = "0.5";
+  document.querySelector("main").style.pointerEvents = "none";
+}
+
 function updateChartTimeframe(timePeriod) {
-  const chartFrame = document.querySelector(".thingspeak-chart iframe");
-  if (!chartFrame) return;
+  const tempChartFrame = document.querySelector("#temperature-chart iframe");
+  const heartbeatChartFrame = document.querySelector("#heartbeat-chart iframe");
+  if (!tempChartFrame && !heartbeatChartFrame) return;
 
   const timeParam =
     thingSpeakConfig.timePeriods[timePeriod] ||
     thingSpeakConfig.timePeriods["1h"];
-  let src = chartFrame.src;
 
-  if (src.includes("minutes=") || src.includes("days=")) {
-    src = src.replace(/(minutes=\d+|days=\d+)/, timeParam);
-    chartFrame.src = src;
+  if (tempChartFrame) {
+    let src = tempChartFrame.src;
+    if (
+      src.includes("minutes=") ||
+      src.includes("days=") ||
+      src.includes("results=")
+    ) {
+      if (src.includes("results=")) {
+        src = src.replace(
+          /results=\d+/,
+          timeParam.replace("minutes=", "results=").replace("days=", "results=")
+        );
+      } else if (src.includes("minutes=") || src.includes("days=")) {
+        src = src.replace(/(minutes=\d+|days=\d+)/, timeParam);
+      }
+      tempChartFrame.src = src;
+    }
+  }
+
+  if (heartbeatChartFrame) {
+    let src = heartbeatChartFrame.src;
+    if (
+      src.includes("minutes=") ||
+      src.includes("days=") ||
+      src.includes("results=")
+    ) {
+      if (src.includes("results=")) {
+        src = src.replace(
+          /results=\d+/,
+          timeParam.replace("minutes=", "results=").replace("days=", "results=")
+        );
+      } else if (src.includes("minutes=") || src.includes("days=")) {
+        src = src.replace(/(minutes=\d+|days=\d+)/, timeParam);
+      }
+      heartbeatChartFrame.src = src;
+    }
   }
 }
 
 function startDataUpdates() {
-  updateLatestValues();
-  setInterval(updateLatestValues, thingSpeakConfig.updateInterval);
+  // Check if already logged in before starting interval
+  if (isLoggedIn) {
+    updateLatestValues();
+    // Store interval ID if you need to clear it on logout
+    // dataUpdateInterval = setInterval(updateLatestValues, thingSpeakConfig.updateInterval);
+    setInterval(updateLatestValues, thingSpeakConfig.updateInterval); // Simplified for now
+  }
 }
 
 function updateLatestValues() {
@@ -137,18 +245,29 @@ function updateLatestValues() {
 }
 
 function updateDisplayValues(data) {
-  if (!data || !data.field1) return;
+  if (data && data.field1) {
+    const temperature = data.field1;
+    temperatureValue.textContent = `${temperature} °C`;
+    if (Math.random() > 0.8) {
+      addStatusMessage(`Temperature reading: ${temperature} °C`);
+    }
+  } else {
+    temperatureValue.textContent = `-- °C`;
+  }
 
-  const temperature = data.field1;
-  temperatureValue.textContent = `${temperature} °C`;
+  if (data && data.field2) {
+    const heartbeat = data.field2;
+    heartbeatValue.textContent = `${heartbeat} BPM`;
+    if (Math.random() > 0.8) {
+      addStatusMessage(`Heartbeat reading: ${heartbeat} BPM`);
+    }
+  } else {
+    heartbeatValue.textContent = `-- BPM`;
+  }
 
   const now = new Date();
   lastUpdateValue.textContent = now.toLocaleTimeString();
   statusValue.textContent = "Connected";
-
-  if (Math.random() > 0.7) {
-    addStatusMessage(`Temperature reading: ${temperature} °C`);
-  }
 }
 
 function addStatusMessage(message, type = "normal") {
@@ -181,7 +300,7 @@ function addStatusMessage(message, type = "normal") {
 
   statusContainer.insertBefore(statusCard, statusContainer.firstChild);
 
-  if (statusContainer.children.length > 5) {
+  if (statusContainer.children.length > 10) {
     statusContainer.removeChild(statusContainer.lastChild);
   }
 }
